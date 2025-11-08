@@ -1,0 +1,52 @@
+# ========================================
+# Global settings for H80 / PolCam project
+# Ensures consistent line endings and diff behavior
+# ========================================
+
+# Use Windows line endings for all text files
+* text=auto eol=crlf
+
+# Explicitly treat source code as text
+*.cs       text diff=csharp
+*.csproj   text
+*.sln      text eol=crlf
+*.config   text
+*.xml      text
+*.xaml     text
+*.cmd      text eol=crlf
+*.bat      text eol=crlf
+*.ps1      text eol=crlf
+*.vbs      text eol=crlf
+*.json     text
+*.md       text
+*.txt      text
+
+# Ignore line ending normalization for binary files
+*.dll      binary
+*.exe      binary
+*.pdb      binary
+*.tlb      binary
+*.snk      binary
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.ico      binary
+*.zip      binary
+*.7z       binary
+*.msi      binary
+*.mp4      binary
+*.wav      binary
+
+# Git diff and merge rules
+*.sln      merge=union
+*.csproj   merge=union
+*.vbproj   merge=union
+*.props    merge=union
+*.targets  merge=union
+
+# Optional: enforce LF for Unix scripts (if any)
+*.sh       text eol=lf
+
+# ========================================
+# End of file
+# ========================================

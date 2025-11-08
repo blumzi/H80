@@ -1,0 +1,116 @@
+# ===============================
+# Visual Studio / .NET Framework
+# ===============================
+
+*.vsidx
+
+# Build outputs
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.vs/
+*.cachefile
+
+# Visual Studio auto-generated
+*.pdb
+*.obj
+*.exe
+*.dll
+*.tlb
+*.mdb
+*.idb
+*.ipch
+*.iobj
+*.ipdb
+*.ilk
+*.aps
+*.ncb
+*.opendb
+*.unsuccessfulbuild
+
+# Build logs and diagnostics
+*.tlog
+*.log
+*.vspscc
+*.vssscc
+*.tmp
+*.log.old
+*.lastbuildstate
+*.log.json
+*.svclog
+
+# Test / Debug
+*.testsettings
+*.vsmdi
+*.coverage
+*.coveragexml
+
+# NuGet packages
+*.nupkg
+**/packages/*
+!**/packages/build/
+*.snupkg
+
+# MSBuild binary and cache files
+*.metaproj
+*.metaproj.tmp
+*.obj
+*.tlog
+*.lastcodeanalysissucceeded
+*.FileListAbsolute.txt
+
+# Rider / JetBrains / VS Code
+.idea/
+.vscode/
+*.DotSettings.user
+
+# Backup files
+*.bak
+*.orig
+*.old
+
+# ==================================
+# Project-specific: COM registration
+# ==================================
+# Exclude registered outputs and type libraries
+*.tlb
+*.regasm.log
+
+# Exclude log output from runtime (your logger)
+C:/Wise/Logs/
+Wise/Logs/
+Logs/
+**/Logs/
+*.log
+
+# Ignore distribution and installer files
+*.zip
+*.7z
+*.msi
+*.msm
+*.msp
+
+# Optional strong-name keys (keep local)
+*.snk
+
+# ==================================
+# Git internals / OS cruft
+# ==================================
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+*.stackdump
+
+# ==================================
+# Optional overrides
+# ==================================
+# Uncomment if you have custom build scripts:
+# !register.cmd
+# !README.md
+# !LICENSE
