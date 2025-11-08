@@ -1,6 +1,6 @@
-﻿// File: H80Logger.cs
-// Project: h80polcam Observatory Control (Class Library .NET Framework 4.7.2)
-// Purpose: Shared singleton logger that emits to ACP.Console and to C:\Wise\Logs\<date>\h80.log
+﻿// File: Logger.cs
+// Project: polcam Observatory Control (Class Library .NET Framework 4.7.2)
+// Purpose: Shared singleton logger that emits to ACP.Console and to C:\Wise\Logs\<date>\polcam.log
 
 using System;
 using System.IO;
@@ -37,7 +37,7 @@ namespace polcam
 
                 string dateFolder = DateTime.Now.ToString("yyyy-MM-dd");
                 string dir = Path.Combine("C:\\Wise\\Logs", dateFolder);
-                string path = Path.Combine(dir, "h80.log");
+                string path = Path.Combine(dir, "polcam.log");
                 Directory.CreateDirectory(dir);
 
                 lock (_sync)

@@ -61,6 +61,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Flip.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Polcam.cs" />
@@ -108,6 +109,11 @@
     <None Include="h80polcam.pfx" />
     <None Include="polcam.pfx" />
     <None Include="register.bat" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".gitattributes" />
+    <Content Include=".gitignore" />
+    <Content Include="README.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

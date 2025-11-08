@@ -1,14 +1,12 @@
 ﻿// Project: Class Library (.NET Framework 4.7.2), x86, "Register for COM interop"
 // NuGet/Refs: ASCOM Platform (reference ASCOM.DriverAccess.dll, ASCOM.Utilities.dll), Microsoft.CSharp
-// ProgId: h80polcam.Control
-// After build (if not using VS "Register for COM interop"): regasm h80polcam.dll /codebase
+// ProgId: polcam
+// After build (if not using VS "Register for COM interop"): regasm polcam.dll /codebase
 
 using ASCOM.DriverAccess;     // from ASCOM Platform
 using ASCOM.Utilities;        // for Chooser (optional)
 using System;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -26,7 +24,7 @@ namespace polcam
         // ------------------- User Config (edit to match your rig) -------------------
         private const string Q550_PROGID = "ASCOM.QHYCCD_CAM2.Camera"; // ASCOM ProgID for QHY550P
         private const string FOCUSER_PROGID = "";                 // e.g. "ASCOM.Robofocus.Focuser"
-        private const string FLIPMIRROR_PROGID = "";              // If flip mirror is an ASCOM Switch, put its ProgID here
+        private const string FLIPMIRROR_PROGID = "http://132.66.65.15/";              // If flip mirror is an ASCOM Switch, put its ProgID here
         private const int FLIPMIRROR_PORT_INDEX_MAIN = 0;          // switch channel for main beam
         private const int FLIPMIRROR_PORT_INDEX_Q550 = 1;          // switch channel for Q550 branch
 
