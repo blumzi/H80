@@ -43,7 +43,18 @@ namespace H80
                 return;
             }
 
-            string command = camera == "main" ? "set_port2" : "set_port1";
+            string command;
+
+            switch (camera)             {
+                case "main":
+                    command = "set_port2";
+                    break;
+                case "polar":
+                    command = "set_port1";
+                    break;
+                default:
+                    throw new ArgumentException("Invalid camera selection");
+            }
             Get(command);
         }
     }
