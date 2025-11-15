@@ -57,16 +57,19 @@ namespace H80
             logger.info("TargetEnd invoked.");
 
             // 1) Read H80 tag values from plan
+            //
+            // #h80 exposure=300 focus-offset=240 gain=10 offset=20
+            //
             dynamic tag = FindTag(plan, "h80", logger);
             double exposure = 300.0;
-            int focuserOffset = 240;
+            int focusOffset = 240;
             double gain = double.NaN;
             double offset = double.NaN;
             if (tag != null)
             {
                 logger.info("H80 tag found in plan; reading parameters.");
                 exposure = ReadDouble(tag, new[] { "exposure", "Exposure" }, exposure, logger);
-                focuserOffset = (int)Math.Round(ReadDouble(tag, new[] { "focuser-offset", "FocuserOffset" }, focuserOffset, logger));
+                focusOffset = (int)Math.Round(ReadDouble(tag, new[] { "focus-offset", "FocusOffset" }, focusOffset, logger));
                 gain = ReadDouble(tag, new[] { "gain" }, gain, logger);
                 offset = ReadDouble(tag, new[] { "offset" }, offset, logger);
             }
@@ -80,13 +83,13 @@ namespace H80
             else
                 logger.info("Primary image path not exposed by target; continuing without it.");
 
-            logger.info($"H80 capture settings: exposure={exposure}s, focuserOffset={focuserOffset}, gain={gain}, offset={offset}");
+            logger.info($"H80 capture settings: exposure={exposure}s, focuserOffset={focusOffset}, gain={gain}, offset={offset}");
             return;
 
             flipMirror.SelectCamera("polar");
 
            
-            TryApplyFocuserOffset(focuserOffset, logger);
+            TryApplyFocuserOffset(focusOffset, logger);
 
             // 5) Capture with QHY550P
             string saveDir = EnsureDir(Path.Combine(GetDefaultAcpImagesDir(), "AuxCam"));
@@ -98,7 +101,7 @@ namespace H80
 
             flipMirror.SelectCamera("main");
 
-            TryApplyFocuserOffset(-focuserOffset, logger);
+            TryApplyFocuserOffset(-focusOffset, logger);
 
             logger.info($"Done. Saved: {fitsPath}");
         }
