@@ -58,10 +58,18 @@ namespace H80
 
             // 1) Read H80 tag values from plan
             dynamic tag = FindTag(plan, "h80", logger);
-            double exposure = ReadDouble(tag, new[] { "exposure", "Exposure" }, 300.0, logger);
-            int focuserOffset = (int)Math.Round(ReadDouble(tag, new[] { "focuser-offset", "FocuserOffset" }, 240, logger));
-            double gain = ReadDouble(tag, new[] { "gain" }, double.NaN, logger);
-            double offset = ReadDouble(tag, new[] { "offset" }, double.NaN, logger);
+            double exposure = 300.0;
+            int focuserOffset = 240;
+            double gain = double.NaN;
+            double offset = double.NaN;
+            if (tag != null)
+            {
+                logger.info("H80 tag found in plan; reading parameters.");
+                exposure = ReadDouble(tag, new[] { "exposure", "Exposure" }, exposure, logger);
+                focuserOffset = (int)Math.Round(ReadDouble(tag, new[] { "focuser-offset", "FocuserOffset" }, focuserOffset, logger));
+                gain = ReadDouble(tag, new[] { "gain" }, gain, logger);
+                offset = ReadDouble(tag, new[] { "offset" }, offset, logger);
+            }
 
             // 2) (Optional) get the primary image file path from target
             string primaryImagePath =
@@ -71,6 +79,9 @@ namespace H80
                 logger.info($"Primary image path reported by target: {primaryImagePath}");
             else
                 logger.info("Primary image path not exposed by target; continuing without it.");
+
+            logger.info($"H80 capture settings: exposure={exposure}s, focuserOffset={focuserOffset}, gain={gain}, offset={offset}");
+            return;
 
             flipMirror.SelectCamera("polar");
 
@@ -86,6 +97,8 @@ namespace H80
             CaptureQ550(exposure, fitsPath, gain, offset, logger);
 
             flipMirror.SelectCamera("main");
+
+            TryApplyFocuserOffset(-focuserOffset, logger);
 
             logger.info($"Done. Saved: {fitsPath}");
         }
