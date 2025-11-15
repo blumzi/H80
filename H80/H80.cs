@@ -56,18 +56,18 @@ namespace H80
         {
             logger.info("TargetEnd invoked.");
 
-            // 1) Read H80 tag values from plan
+            // 1) Read polar tag values from plan
             //
-            // #h80 exposure=300 focus-offset=240 gain=10 offset=20
+            // #polar exposure=300 focus-offset=240 gain=10 offset=20
             //
-            dynamic tag = FindTag(plan, "h80", logger);
+            dynamic tag = FindTag(plan, "polar", logger);
             double exposure = 300.0;
             int focusOffset = 240;
             double gain = double.NaN;
             double offset = double.NaN;
             if (tag != null)
             {
-                logger.info("H80 tag found in plan; reading parameters.");
+                logger.info("polar tag found in plan; reading parameters.");
                 exposure = ReadDouble(tag, new[] { "exposure", "Exposure" }, exposure, logger);
                 focusOffset = (int)Math.Round(ReadDouble(tag, new[] { "focus-offset", "FocusOffset" }, focusOffset, logger));
                 gain = ReadDouble(tag, new[] { "gain" }, gain, logger);
