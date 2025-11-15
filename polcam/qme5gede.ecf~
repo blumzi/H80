@@ -1,0 +1,53 @@
+﻿using System.Net.Http;
+using System.Threading.Tasks;
+
+namespace H80
+{
+    public class FlipMirror
+    {
+        private readonly string url_base = "http://132.66.65.15/";
+
+        public FlipMirror() {
+        }
+
+        public async Task<string> Get(string url)
+        {
+            using (var client = new HttpClient())
+            {
+                var getResponse = await client.GetAsync($"{this.url_base}/{url}");
+                string content = await getResponse.Content.ReadAsStringAsync();
+                return content.Trim();
+            }
+        }
+
+        public string CurrentCamera()
+        {
+            var result =  Get("status").Result;
+
+            if (result.Contains("S_AOUT_BOUT"))
+                return "main";
+            else if (result.Contains("S_AIN_BOUT"))
+                return "polar";
+            else
+                return "unknown";
+        }
+
+        public void SelectCamera(string which)
+        {
+            which = which.ToLower();
+            if (CurrentCamera() == which)
+                return;
+
+            Task task;
+            if (which == "main")
+                task = Get("set_port1");
+            else if (which == "polar")
+                task = Get("set_port2");
+            else
+                throw new System.Exception($"Unknown camera selection '{which}', use either 'main' or 'polar'");
+
+            task.Wait();
+        }
+    };
+
+}

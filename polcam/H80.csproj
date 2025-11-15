@@ -7,8 +7,8 @@
     <ProjectGuid>{510E9AA4-8094-4C5F-981D-79340539B849}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>polcam</RootNamespace>
-    <AssemblyName>polcam</AssemblyName>
+    <RootNamespace>H80</RootNamespace>
+    <AssemblyName>H80</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -20,7 +20,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <WarningLevel>5</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <RegisterForComInterop>true</RegisterForComInterop>
   </PropertyGroup>
@@ -36,7 +36,7 @@
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>polcam.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>H80.pfx</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="ASCOM.DeviceInterfaces, Version=6.0.0.0, Culture=neutral, PublicKeyToken=565de7938946fba7, processorArchitecture=MSIL">
@@ -61,15 +61,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Flip.cs" />
+    <Compile Include="FlipMirror.cs" />
     <Compile Include="Globals.cs" />
     <Compile Include="Logger.cs" />
-    <Compile Include="Polcam.cs" />
+    <Compile Include="H80.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="ACP">
       <Guid>{82972326-88D5-499A-8D6F-F36F313CBE09}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+    <COMReference Include="FocusMax">
+      <Guid>{BB2CAC95-BD73-4F30-8AF1-859C55E5776D}</Guid>
       <VersionMajor>1</VersionMajor>
       <VersionMinor>0</VersionMinor>
       <Lcid>0</Lcid>
@@ -107,7 +116,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="h80polcam.pfx" />
-    <None Include="polcam.pfx" />
+    <None Include="H80.pfx" />
     <None Include="register.bat" />
   </ItemGroup>
   <ItemGroup>

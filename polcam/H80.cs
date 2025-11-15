@@ -1,7 +1,7 @@
 ﻿// Project: Class Library (.NET Framework 4.7.2), x86, "Register for COM interop"
 // NuGet/Refs: ASCOM Platform (reference ASCOM.DriverAccess.dll, ASCOM.Utilities.dll), Microsoft.CSharp
-// ProgId: polcam
-// After build (if not using VS "Register for COM interop"): regasm polcam.dll /codebase
+// ProgId: H80
+// After build (if not using VS "Register for COM interop"): regasm H80.dll /codebase
 
 using ASCOM.DriverAccess;     // from ASCOM Platform
 using ASCOM.Utilities;        // for Chooser (optional)
@@ -11,25 +11,44 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using ACP;    // for Plan/Target late-bound access
-using static polcam.Globals;
+using FocusMax; // for Focuser
+using static H80.Globals;
 
-namespace polcam
+namespace H80
 {
     [ComVisible(true)]
     [Guid("7E9B5C2E-7C28-4D3E-A5D5-5E7E2B58F0A1")]
-    [ProgId("polcam")]
+    [ProgId("H80")]
     [ClassInterface(ClassInterfaceType.AutoDual)]
-    public class Polcam
-    {
-        // ------------------- User Config (edit to match your rig) -------------------
-        private const string Q550_PROGID = "ASCOM.QHYCCD_CAM2.Camera"; // ASCOM ProgID for QHY550P
-        private const string FOCUSER_PROGID = "";                 // e.g. "ASCOM.Robofocus.Focuser"
-        private const string FLIPMIRROR_PROGID = "http://132.66.65.15/";              // If flip mirror is an ASCOM Switch, put its ProgID here
-        private const int FLIPMIRROR_PORT_INDEX_MAIN = 0;          // switch channel for main beam
-        private const int FLIPMIRROR_PORT_INDEX_Q550 = 1;          // switch channel for Q550 branch
 
-        private const bool USE_CHOOSERS_WHEN_EMPTY = true;         // pop Choosers if ProgID is empty
-        private const string LOG_DIR = @"C:\\Wise\\Logs"; // ensure writeable
+    public class H80
+    {
+        private readonly ACP.Util acpUtil = (ACP.Util) Marshal.GetActiveObject("ACP.Util");
+        private readonly FocusMax.Focuser focuser = (FocusMax.Focuser) Marshal.GetActiveObject("FocusMax.Focuser");
+        private readonly FlipMirror flipMirror = new FlipMirror();
+        private readonly ASCOM.DriverAccess.Camera q550p = new ASCOM.DriverAccess.Camera("ASCOM.QHYCCD_CAM2.Camera");
+
+        readonly Type AcpPlan = Type.GetTypeFromProgID("ACP.Plan");
+
+        public H80()
+        {
+            if (!focuser.Link)
+            {
+                focuser.Link = true;
+                logger.info("Connected to FocusMax focuser.");
+            }
+            logger.info($"focuser position: {focuser.Position}");
+
+            if (!acpUtil.ScriptTelescope.connected)
+            {
+                acpUtil.ScriptTelescope.Connected = true;
+                logger.info("Connected to ACP telescope.");
+            }
+            logger.info($"Telescope site: {acpUtil.ScriptTelescope.SiteLatitude}, {acpUtil.ScriptTelescope.SiteLongitude}");
+
+            logger.info($"Connecting q550p camera ...");
+            q550p.Connected = true;
+        }
 
         // ------------------- Entry Point (called from ACP VBScript) -------------------
         // Signature kept as (object, object) to handle late-bound COM objects from ACP
@@ -37,11 +56,10 @@ namespace polcam
         {
             logger.info("TargetEnd invoked.");
 
-            // 1) Read polcam tag values from plan
-            dynamic tag = FindTag(plan, "polcam", logger);
-            double exposure = ReadDouble(tag, new[] { "exposure", "Exposure" }, 5.0, logger);
-            int focuserOffset = (int)Math.Round(ReadDouble(tag, new[] { "focuser-offset", "FocuserOffset" }, 0, logger));
-            short bin = (short)Math.Round(ReadDouble(tag, new[] { "bin" }, 1, logger));
+            // 1) Read H80 tag values from plan
+            dynamic tag = FindTag(plan, "h80", logger);
+            double exposure = ReadDouble(tag, new[] { "exposure", "Exposure" }, 300.0, logger);
+            int focuserOffset = (int)Math.Round(ReadDouble(tag, new[] { "focuser-offset", "FocuserOffset" }, 240, logger));
             double gain = ReadDouble(tag, new[] { "gain" }, double.NaN, logger);
             double offset = ReadDouble(tag, new[] { "offset" }, double.NaN, logger);
 
@@ -54,14 +72,10 @@ namespace polcam
             else
                 logger.info("Primary image path not exposed by target; continuing without it.");
 
-            // 3) Flip mirror to Q550 branch (if configured)
-            TryRouteFlipMirror(toQ550: true, log: logger);
+            flipMirror.SelectCamera("polar");
 
-            // 4) Nudge focuser by offset (if configured)
-            if (!string.IsNullOrWhiteSpace(FOCUSER_PROGID) || USE_CHOOSERS_WHEN_EMPTY)
-            {
-                TryApplyFocuserOffset(focuserOffset, logger);
-            }
+           
+            TryApplyFocuserOffset(focuserOffset, logger);
 
             // 5) Capture with QHY550P
             string saveDir = EnsureDir(Path.Combine(GetDefaultAcpImagesDir(), "AuxCam"));
@@ -69,117 +83,70 @@ namespace polcam
                                             fallback: "Target");
             string fitsPath = UniquePath(saveDir, $"{baseName}_{UtcStamp()}_QHY550P_01.fits");
 
-            CaptureQ550(exposure, bin, fitsPath, gain, offset, logger);
+            CaptureQ550(exposure, fitsPath, gain, offset, logger);
 
-            // 6) Return flip mirror to main branch (optional)
-            TryRouteFlipMirror(toQ550: false, log: logger);
+            flipMirror.SelectCamera("main");
 
             logger.info($"Done. Saved: {fitsPath}");
         }
 
         // ------------------- QHY550 capture via ASCOM -------------------
-        private void CaptureQ550(double exposure, short bin, string fitsPath, double gain, double offset, Logger log)
+        private void CaptureQ550(double exposure, string fitsPath, double gain, double offset, Logger log)
         {
-            string progId = Q550_PROGID;
-
-            using (var cam = new Camera(progId))
+            try
             {
-                log.info($"Connecting camera {progId}...");
-                cam.Connected = true;
+                // If driver exposes gain/offset as doubles/ints via Camera properties
+                TrySetProperty(q550p, "Gain", gain, log);
+                TrySetProperty(q550p, "Offset", offset, log);
 
-                try
-                {
-                    if (bin > 0) { cam.BinX = bin; cam.BinY = bin; }
+                log.info($"Start q550p exposure {exposure}s");
+                q550p.StartExposure(exposure, true);
+                while (!q550p.ImageReady) Thread.Sleep(150);
 
-                    // If driver exposes gain/offset as doubles/ints via Camera properties
-                    TrySetProperty(cam, "Gain", gain, log);
-                    TrySetProperty(cam, "Offset", offset, log);
+                var img = q550p.ImageArray as Array; // 2D [y,x]
+                if (img == null)
+                    throw new InvalidOperationException("Camera.ImageArray returned null or unexpected type.");
 
-                    log.info($"StartExposure {exposure}s, bin={bin}");
-                    cam.StartExposure(exposure, true);
-                    while (!cam.ImageReady) Thread.Sleep(150);
+                // Dimensions
+                int ny = img.GetLength(0);
+                int nx = img.GetLength(1);
 
-                    var img = cam.ImageArray as Array; // 2D [y,x]
-                    if (img == null)
-                        throw new InvalidOperationException("Camera.ImageArray returned null or unexpected type.");
-
-                    // Dimensions
-                    int ny = img.GetLength(0);
-                    int nx = img.GetLength(1);
-
-                    WriteFits16Mono(fitsPath, img, nx, ny, header:
-                        h => {
-                            h.CardS("OBJECT", ""); // we’ll fill from file name
-                            h.CardS("INSTRUME", "QHY550P");
-                            h.CardS("DATE-OBS", UtcStamp());
-                            h.CardS("EXPTIME", exposure.ToString("0.###"));
-                            //h.CardK("XBINNING", bin.ToString());
-                            if (!double.IsNaN(gain)) h.CardS("EGAIN", gain.ToString());
-                            if (!double.IsNaN(offset)) h.CardS("EOFFSET", offset.ToString());
-                        });
+                WriteFits16Mono(fitsPath, img, nx, ny, header:
+                    h =>
+                    {
+                        h.CardS("OBJECT", ""); // we’ll fill from file name
+                        h.CardS("INSTRUME", "QHY550P");
+                        h.CardS("DATE-OBS", UtcStamp());
+                        h.CardS("EXPTIME", exposure.ToString("0.###"));
+                        //h.CardK("XBINNING", bin.ToString());
+                        if (!double.IsNaN(gain)) h.CardS("EGAIN", gain.ToString());
+                        if (!double.IsNaN(offset)) h.CardS("EOFFSET", offset.ToString());
+                    });
                 }
-                finally
+                catch (Exception ex)
                 {
-                    cam.Connected = false;
+                    log.Error($"QHY550P capture failed: {ex.Message}");
                 }
-            }
         }
 
         // ------------------- Focuser offset -------------------
         private void TryApplyFocuserOffset(int offset, Logger log)
         {
-            if (offset == 0) { log.info("Focuser offset = 0 (skipped)."); return; }
-
-            string progId = FOCUSER_PROGID;
-            if (string.IsNullOrWhiteSpace(progId) && USE_CHOOSERS_WHEN_EMPTY)
+            try
             {
-                var chooser = new Chooser { DeviceType = "Focuser" };
-                progId = chooser.Choose(null);
+                int start = focuser.Position;
+                int dest = Math.Max(0, start + offset);
+                log.info($"Focuser move: {start} -> {dest}");
+                focuser.Move(dest);
+                while (focuser.IsMoving)
+                    Thread.Sleep(100);
             }
-            if (string.IsNullOrWhiteSpace(progId)) { log.info("No focuser configured."); return; }
-
-            using (var foc = new Focuser(progId))
+            catch (Exception ex)
             {
-                foc.Connected = true;
-                try
-                {
-                    int start = foc.Position;
-                    int dest = Math.Max(0, start + offset);
-                    log.info($"Focuser move: {start} -> {dest}");
-                    foc.Move(dest);
-                }
-                finally { foc.Connected = false; }
-            }
+                log.Warning($"Focuser move failed: {ex.Message}");
+            };
         }
 
-        // ------------------- Flip mirror routing (as ASCOM Switch) -------------------
-        private void TryRouteFlipMirror(bool toQ550, Logger log)
-        {
-            string progId = FLIPMIRROR_PROGID;
-            if (string.IsNullOrWhiteSpace(progId)) { log.info("No flip mirror configured."); return; }
-
-            using (var sw = new ASCOM.DriverAccess.Switch(progId))
-            {
-                sw.Connected = true;
-                try
-                {
-                    int index = toQ550 ? FLIPMIRROR_PORT_INDEX_Q550 : FLIPMIRROR_PORT_INDEX_MAIN;
-                    int count = sw.MaxSwitch;
-                    if (index < 0 || index >= count) throw new IndexOutOfRangeException($"Flip mirror index {index} out of 0..{count - 1}");
-                    log.info($"Flip mirror -> channel {index}");
-                    // Some devices are momentary; most beam selectors are latched booleans per channel
-                    for (short i = 0; i < count; i++)
-                        SafeSetSwitch(sw, i, i == index);
-                }
-                finally { sw.Connected = false; }
-            }
-        }
-
-        private void SafeSetSwitch(ASCOM.DriverAccess.Switch sw, short index, bool state)
-        {
-            try { if (sw.CanWrite(index)) sw.SetSwitch(index, state); }
-            catch { /* ignore */ }
-        }
 
         // ------------------- Plan tag parsing (late-bound COM) -------------------
         private dynamic FindTag(object plan, string wantedName, Logger log)

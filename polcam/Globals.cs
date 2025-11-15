@@ -1,7 +1,7 @@
 ﻿// File: Globals.cs
 // Purpose: Provide global alias for H80Logger singleton
 
-namespace polcam
+namespace H80
 {
     public static class Globals
     {
