@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace H80
 {
@@ -11,17 +10,17 @@ namespace H80
     {
         private readonly HttpClient _httpClient = new HttpClient();
 
-        public async Task<string> Get(string url)
+        public string Get(string url)
         {
             var requestUri = $"https://http://132.66.65.15/{Uri.EscapeDataString(url)}";
-            var response = await _httpClient.GetAsync(requestUri);
+            var response = _httpClient.GetAsync(requestUri).Result;
             response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsStringAsync();
+            return response.Content.ReadAsStringAsync().Result;
         }
 
-        public async Task<string> CurrentCamera()
+        public string CurrentCamera()
         {
-            var response = await Get("status");
+            var response = Get("status");
 
             if (response.Contains("S_AIN_BOUT"))
             {
@@ -37,15 +36,15 @@ namespace H80
             }
         }
 
-        public async Task SelectCamera(string camera)
+        public void SelectCamera(string camera)
         {
-            if (camera == CurrentCamera().Result)
+            if (camera == CurrentCamera())
             {
                 return;
             }
 
             string command = camera == "main" ? "set_port2" : "set_port1";
-            await Get(command);
+            Get(command);
         }
     }
 }

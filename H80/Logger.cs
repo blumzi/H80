@@ -1,6 +1,6 @@
 ﻿// File: Logger.cs
 // Project: H80 Observatory Control (Class Library .NET Framework 4.7.2)
-// Purpose: Shared singleton logger that emits to ACP.Console and to C:\Wise\Logs\<date>\polcam.log
+// Purpose: Shared singleton logger that emits to ACP.Console and to C:\Wise\Logs\<date>\h80.log
 
 using ACP;
 using System;

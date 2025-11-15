@@ -115,7 +115,6 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="h80polcam.pfx" />
     <None Include="H80.pfx" />
     <None Include="register.bat" />
   </ItemGroup>
